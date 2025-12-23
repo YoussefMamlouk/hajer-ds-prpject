@@ -1,0 +1,10 @@
+mineral,horizon,model,n,rmse,mae,smape,directional_accuracy,skill_rmse_vs_naive
+Iron ore,6,naive,22,4.76,4.37,8.91,0.0,0.0
+Iron ore,6,lightgbm,22,5.68,4.89,10.13,0.64,-0.19
+Iron ore,6,random_forest,22,6.1,5.3,11.05,0.64,-0.28
+Iron ore,6,catboost,22,6.64,5.78,12.12,0.64,-0.39
+Iron ore,6,arima,22,8.34,7.5,16.11,0.55,-0.75
+Iron ore,6,sarima,22,8.35,7.53,16.19,0.55,-0.75
+Iron ore,6,historical_mean,22,8.75,7.94,17.14,0.55,-0.84
+Iron ore,6,sarimax,0,,,,,
+Iron ore,6,xgboost,0,,,,,

@@ -1,0 +1,10 @@
+mineral,horizon,model,n,rmse,mae,smape,directional_accuracy,skill_rmse_vs_naive
+Coal,3,catboost,22,3.86,2.94,3.46,0.64,0.15
+Coal,3,random_forest,22,4.07,3.11,3.65,0.64,0.1
+Coal,3,arima,22,4.11,3.22,3.79,0.64,0.1
+Coal,3,lightgbm,22,4.16,3.03,3.56,0.64,0.09
+Coal,3,naive,22,4.55,3.75,4.44,0.0,0.0
+Coal,3,sarima,22,7.28,5.88,6.7,0.64,-0.6
+Coal,3,historical_mean,22,9.37,8.73,10.58,0.45,-1.06
+Coal,3,sarimax,0,,,,,
+Coal,3,xgboost,0,,,,,

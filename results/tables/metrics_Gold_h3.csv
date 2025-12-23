@@ -1,0 +1,10 @@
+mineral,horizon,model,n,rmse,mae,smape,directional_accuracy,skill_rmse_vs_naive
+Gold,3,naive,22,10.11,8.92,2.36,0.0,0.0
+Gold,3,sarima,22,43.1,40.32,10.11,0.55,-3.26
+Gold,3,random_forest,22,56.22,55.23,13.63,0.55,-4.56
+Gold,3,arima,22,60.0,59.36,14.59,0.55,-4.93
+Gold,3,lightgbm,22,65.15,64.51,15.74,0.55,-5.44
+Gold,3,catboost,22,67.86,66.88,16.25,0.55,-5.71
+Gold,3,historical_mean,22,143.26,142.99,31.83,0.55,-13.17
+Gold,3,sarimax,0,,,,,
+Gold,3,xgboost,0,,,,,

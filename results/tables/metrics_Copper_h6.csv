@@ -1,0 +1,10 @@
+mineral,horizon,model,n,rmse,mae,smape,directional_accuracy,skill_rmse_vs_naive
+Copper,6,sarima,22,50.56,40.43,16.05,0.64,0.11
+Copper,6,arima,22,53.43,44.93,17.67,0.55,0.06
+Copper,6,random_forest,22,53.49,45.39,17.84,0.59,0.06
+Copper,6,catboost,22,54.69,44.31,17.41,0.59,0.04
+Copper,6,naive,22,56.71,43.65,17.82,0.0,0.0
+Copper,6,lightgbm,22,57.28,45.11,17.78,0.5,-0.01
+Copper,6,historical_mean,22,69.4,59.09,22.36,0.5,-0.22
+Copper,6,sarimax,0,,,,,
+Copper,6,xgboost,0,,,,,
