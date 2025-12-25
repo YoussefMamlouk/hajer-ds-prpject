@@ -173,6 +173,7 @@ def tune_hyperparameters(
                     **params,
                     random_seed=random_state,
                     verbose=False,
+                    allow_writing_files=False,
                 )
             else:
                 continue
@@ -262,6 +263,7 @@ def create_tuned_model_factory(
                     **params_copy,
                     random_seed=random_state,
                     verbose=False,
+                    allow_writing_files=False,
                 ),
             )
         return factory
@@ -629,6 +631,104 @@ def plot_residuals(
     ax.set_title(title)
     ax.set_xlabel("Date")
     ax.set_ylabel("Residual")
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+
+
+def plot_forecast_vs_actual_all_models(
+    result: BacktestResult,
+    *,
+    models: List[str],
+    title: str,
+    output_path: Path,
+    show_naive: bool = True,
+) -> None:
+    """
+    Plot forecast vs actual for all models in a single plot.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Combine all data
+    df = pd.concat([result.y_true.rename("y_true")], axis=1)
+    for model in models:
+        if model in result.y_pred.columns:
+            df = pd.concat([df, result.y_pred[model].rename(model)], axis=1)
+    
+    if show_naive and "naive" in result.y_pred.columns and "naive" not in models:
+        df = pd.concat([df, result.y_pred["naive"].rename("naive")], axis=1)
+    
+    df = df.dropna()
+
+    if df.empty:
+        return
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # Plot actual
+    ax.plot(df.index, df["y_true"], label="Actual", linewidth=2.5, color="black", zorder=10)
+    
+    # Plot each model with different colors
+    colors = plt.cm.tab10(range(len(models) + (1 if show_naive and "naive" in df.columns and "naive" not in models else 0)))
+    color_idx = 0
+    
+    for model in models:
+        if model in df.columns:
+            ax.plot(df.index, df[model], label=f"{model}", linewidth=1.8, alpha=0.8, color=colors[color_idx])
+            color_idx += 1
+    
+    # Plot naive if requested and not already in models list
+    if show_naive and "naive" in df.columns and "naive" not in models:
+        ax.plot(df.index, df["naive"], label="Naive", linewidth=1.2, alpha=0.7, linestyle="--", color=colors[color_idx])
+    
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Production")
+    ax.legend(loc="best", fontsize=9)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+
+
+def plot_residuals_all_models(
+    result: BacktestResult,
+    *,
+    models: List[str],
+    title: str,
+    output_path: Path,
+) -> None:
+    """
+    Plot residuals for all models in a single plot.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Calculate residuals for each model
+    residuals_dict = {}
+    
+    for model in models:
+        if model in result.y_pred.columns:
+            df = pd.concat([result.y_true, result.y_pred[model].rename("pred")], axis=1).dropna()
+            if not df.empty:
+                resid = df["pred"] - df["y_true"]
+                residuals_dict[model] = resid
+    
+    if not residuals_dict:
+        return
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # Plot residuals for each model with different colors
+    colors = plt.cm.tab10(range(len(residuals_dict)))
+    for idx, (model, resid) in enumerate(residuals_dict.items()):
+        ax.plot(resid.index, resid.values, label=f"{model}", linewidth=1.5, alpha=0.7, color=colors[idx])
+    
+    ax.axhline(0.0, color="black", linewidth=1, linestyle="-", zorder=0)
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Residual")
+    ax.legend(loc="best", fontsize=9)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
     fig.savefig(output_path, dpi=150)

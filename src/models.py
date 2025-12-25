@@ -296,6 +296,7 @@ def get_model_specs(random_state: int = 42) -> Dict[str, Callable[[], BaseForeca
                 loss_function="RMSE",
                 random_seed=random_state,
                 verbose=False,
+                allow_writing_files=False,
             ),
         )
 

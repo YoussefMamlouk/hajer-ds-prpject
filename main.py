@@ -10,8 +10,8 @@ from src.data_loader import DataConfig, MINERALS, build_monthly_panel, load_raw_
 from src.evaluation import (
     compute_metrics,
     generate_ml_vs_baseline_summary,
-    plot_forecast_vs_actual,
-    plot_residuals,
+    plot_forecast_vs_actual_all_models,
+    plot_residuals_all_models,
     single_split_evaluation,
     SplitConfig,
     save_feature_importance,
@@ -189,6 +189,8 @@ def main() -> int:
     model_factories = get_model_specs(random_state=42)
 
     all_metrics = []
+    all_predictions = []
+    all_errors = []
 
     for mineral in MINERALS:
         for h in horizons:
@@ -212,10 +214,7 @@ def main() -> int:
             metrics.insert(0, "mineral", mineral)
             all_metrics.append(metrics)
 
-            # Save per-mineral/horizon metrics
             tables_dir = project_root / "results" / "tables"
-            out_metrics_path = tables_dir / f"metrics_{mineral.replace(' ', '_')}_h{h}.csv"
-            round_numeric_columns(metrics).to_csv(out_metrics_path, index=False)
 
             # Plots for top models (by RMSE), plus naive
             top_models = [m for m in metrics["model"].head(3).tolist() if m in bt.y_pred.columns]
@@ -223,31 +222,38 @@ def main() -> int:
                 top_models.append("naive")
 
             plots_dir = project_root / "results" / "plots" / mineral.replace(" ", "_") / f"h{h}"
-            for m in top_models:
-                plot_forecast_vs_actual(
-                    bt,
-                    model=m,
-                    title=f"{mineral} | h={h} | {m}",
-                    output_path=plots_dir / f"forecast_vs_actual_{m}.png",
-                    show_naive=True,
-                )
-                plot_residuals(
-                    bt,
-                    model=m,
-                    title=f"{mineral} | h={h} | Residuals | {m}",
-                    output_path=plots_dir / f"residuals_{m}.png",
-                )
+            
+            # Combined forecast vs actual plot for all models
+            plot_forecast_vs_actual_all_models(
+                bt,
+                models=top_models,
+                title=f"{mineral} | h={h} | Forecast vs Actual (All Models)",
+                output_path=plots_dir / "forecast_vs_actual_all_models.png",
+                show_naive=True,
+            )
+            
+            # Combined residuals plot for all models
+            plot_residuals_all_models(
+                bt,
+                models=top_models,
+                title=f"{mineral} | h={h} | Residuals (All Models)",
+                output_path=plots_dir / "residuals_all_models.png",
+            )
 
-            # Save backtest predictions for transparency
-            pred_path = tables_dir / f"predictions_{mineral.replace(' ', '_')}_h{h}.csv"
+            # Collect predictions with mineral and horizon identifiers
             pred_df = pd.concat([bt.y_true, bt.y_level, bt.y_pred], axis=1)
-            pred_df.to_csv(pred_path, index=True)
+            pred_df = pred_df.reset_index()  # Convert index to column
+            pred_df.insert(0, "horizon", h)
+            pred_df.insert(0, "mineral", mineral)
+            all_predictions.append(pred_df)
 
-            # Save errors (if any)
+            # Collect errors (if any) with mineral and horizon identifiers
             err_nonempty = (bt.errors.replace("", np.nan).notna()).any().any()
             if err_nonempty:
-                err_path = tables_dir / f"errors_{mineral.replace(' ', '_')}_h{h}.csv"
-                bt.errors.to_csv(err_path, index=True)
+                err_df = bt.errors.reset_index()  # Convert index to column
+                err_df.insert(0, "horizon", h)
+                err_df.insert(0, "mineral", mineral)
+                all_errors.append(err_df)
 
             # Save feature importance for tree-based models
             # Train a final model on all available data to get feature importances
@@ -273,6 +279,18 @@ def main() -> int:
     all_metrics_df = pd.concat(all_metrics, ignore_index=True)
     out_all = project_root / "results" / "tables" / "metrics_by_mineral_horizon.csv"
     round_numeric_columns(all_metrics_df).to_csv(out_all, index=False)
+
+    # Save combined predictions
+    if all_predictions:
+        all_predictions_df = pd.concat(all_predictions, ignore_index=True)
+        out_predictions = project_root / "results" / "tables" / "predictions_all.csv"
+        all_predictions_df.to_csv(out_predictions, index=False)
+
+    # Save combined errors
+    if all_errors:
+        all_errors_df = pd.concat(all_errors, ignore_index=True)
+        out_errors = project_root / "results" / "tables" / "errors_all.csv"
+        all_errors_df.to_csv(out_errors, index=False)
 
     # Simple summary: best model per mineral/horizon by RMSE
     summary = (
@@ -319,6 +337,10 @@ def main() -> int:
     print(f"  - {out_all}")
     print(f"  - {out_summary}")
     print(f"  - {out_ml_comparison}")
+    if all_predictions:
+        print(f"  - {out_predictions}")
+    if all_errors:
+        print(f"  - {out_errors}")
     print(f"  - {summary_md_path}")
     print("=" * 80)
 
